@@ -113,9 +113,11 @@ Resources:
             - Name: SERVER__NAME
               Value: !Sub "${ProjectName}-${BranchName}"
             - Name: SERVER__PORT
-              Value: "80"
+              Value: "5001"
             - Name: LOGGING__ENABLED
               Value: "true"
+            - Name: FLASK_APP
+              Value: "app.py"
           PortMappings:
             - ContainerPort: 5001
           LogConfiguration:
