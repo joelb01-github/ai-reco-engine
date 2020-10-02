@@ -20,7 +20,7 @@ Parameters:
     Description: A path on the public load balancer that this service should be connected to. Use * to send all load balancer traffic to this service.
   Priority:
     Type: Number
-    Default: 1
+    Default: 2
     Description: The priority for the routing rule added to the load balancer. This only applies if there are multiple services which have been assigned to different paths on the load balancer.
   NetworkingStackName:
     Type: String
