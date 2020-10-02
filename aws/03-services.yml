@@ -1,0 +1,181 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "Recommender API (MVP version)"
+
+Parameters:
+  ProjectName:
+    Type: String
+  ExecutionId:
+    Type: String
+    Description: Execution ID of the pipeline
+  BranchName:
+    Type: String
+  ECSTaskCustomRole:
+    Type: String
+    Default: ""
+    Description: (Optional) An IAM role to give the service's containers if the code within needs to access other AWS resources like S3 buckets, DynamoDB tables, etc
+  Path:
+    Type: String
+    Default: "/reco-mvp*"
+    Description: A path on the public load balancer that this service should be connected to. Use * to send all load balancer traffic to this service.
+  Priority:
+    Type: Number
+    Default: 1
+    Description: The priority for the routing rule added to the load balancer. This only applies if there are multiple services which have been assigned to different paths on the load balancer.
+  NetworkingStackName:
+    Type: String
+    Description: "Name of the CF stack associated with the instrastrure codepipeline step within the be-awsInfra-networking project"
+  EcsClusterStackName:
+    Type: String
+    Description: "Name of the CF stack associated with the instrastrure codepipeline step within the be-awsInfra-ecsCluster project"
+
+Conditions:
+  HasCustomRole: !Not [ !Equals [!Ref 'ECSTaskCustomRole', ''] ]
+
+Mappings:
+  BranchName:
+    dev:
+      ServiceDesiredCount: 1
+      TaskCpuUnits: 256
+      TaskReservedMemory: 256
+    uat:
+      ServiceDesiredCount: 1
+      TaskCpuUnits: 256
+      TaskReservedMemory: 256
+    prod:
+      ServiceDesiredCount: 2
+      TaskCpuUnits: 1024
+      TaskReservedMemory: 1024
+
+Resources:
+  ECSService:
+    DependsOn:
+      - HTTPSLoadBalancerRule
+      - HTTPLoadBalancerRule
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: 
+        Fn::ImportValue:
+          !Sub "${EcsClusterStackName}-${BranchName}:ECSClusterName"
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 75
+      DesiredCount: !FindInMap [
+        BranchName,
+        !Ref BranchName,
+        ServiceDesiredCount
+      ]
+      LaunchType: EC2
+      LoadBalancers:
+        - ContainerName: !Sub "${ProjectName}-${BranchName}"
+          ContainerPort: 80
+          TargetGroupArn: !Ref LoadBalancerTargetGroup
+      SchedulingStrategy: REPLICA
+      ServiceName: !Sub "${ProjectName}-${BranchName}"
+      TaskDefinition: !Ref ECSTaskDefinition
+
+  ECSTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub "${ProjectName}-${BranchName}"
+      Cpu: !FindInMap [
+        BranchName,
+        !Ref BranchName,
+        TaskCpuUnits
+      ]
+      Memory: !FindInMap [
+        BranchName,
+        !Ref BranchName,
+        TaskReservedMemory
+      ]
+      TaskRoleArn: 
+        Fn::If:
+          - 'HasCustomRole'
+          - !Ref 'ECSTaskCustomRole'
+          - !Ref "AWS::NoValue"
+      ContainerDefinitions:
+        - Name: !Sub "${ProjectName}-${BranchName}"
+          Image: !Sub 
+            - "${AccountId}.dkr.ecr.${Region}.amazonaws.com/${ECRRepositoryName}:${ExecutionId}"
+            - AccountId: !Ref "AWS::AccountId"
+              Region: !Ref AWS::Region
+              ECRRepositoryName:
+                Fn::ImportValue:
+                  !Sub "${EcsClusterStackName}-${BranchName}:ECRRepositoryName"
+              ExecutionId: !Ref ExecutionId
+          Cpu: !FindInMap [ BranchName, !Ref BranchName, TaskCpuUnits ]
+          Memory: !FindInMap [ BranchName, !Ref BranchName, TaskReservedMemory ]
+          Environment:
+            - Name: NODE_ENV
+              Value: production
+            - Name: DEV_ENV
+              Value: !Ref BranchName
+            - Name: SERVER__NAME
+              Value: !Sub "${ProjectName}-${BranchName}"
+            - Name: SERVER__PORT
+              Value: "80"
+            - Name: LOGGING__ENABLED
+              Value: "true"
+          PortMappings:
+            - ContainerPort: 80
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref 'AWS::Region'
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/ecs/${ProjectName}-${BranchName}
+      RetentionInDays: 7
+
+  # Used for keeping track of all the tasks, and what IP addresses / port numbers they have. Most often this target group is just connected to an application load balancer, so it can automatically distribute traffic across all the targets.
+  LoadBalancerTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      TargetType: instance
+      Protocol: HTTP
+      Port: 80
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /movieInfo
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      VpcId: 
+        Fn::ImportValue:
+          !Sub "${NetworkingStackName}:VPCId"
+
+  # Create a rule on the load balancer for routing traffic to the target group
+  HTTPSLoadBalancerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+        - TargetGroupArn: !Ref 'LoadBalancerTargetGroup'
+          Type: 'forward'
+      Conditions:
+        - Field: path-pattern
+          Values:
+           - !Ref 'Path'
+      ListenerArn: 
+        Fn::ImportValue:
+          !Sub "${EcsClusterStackName}-${BranchName}:PublicLoadBalancerHTTPSListener"
+      Priority: !Ref 'Priority'
+
+  # Create a rule on the load balancer for routing traffic to the target group
+  HTTPLoadBalancerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+        - TargetGroupArn: !Ref 'LoadBalancerTargetGroup'
+          Type: 'forward'
+      Conditions:
+        - Field: path-pattern
+          Values:
+           - !Ref 'Path'
+      ListenerArn: 
+        Fn::ImportValue:
+          !Sub "${EcsClusterStackName}-${BranchName}:PublicLoadBalancerHTTPListener"
+      Priority: !Ref 'Priority'

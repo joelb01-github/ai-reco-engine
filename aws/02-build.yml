@@ -1,0 +1,77 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "Docker Repo"
+
+Parameters:
+  ProjectName:
+    Type: String
+  ExecutionId:
+    Type: String
+    Description: Execution ID of the pipeline
+  BranchName:
+    Type: String
+    Description: "The deployment environment" 
+    AllowedValues:
+      - "dev"
+      - "uat"
+      - "master"
+  EcsClusterStackName:
+    Type: String
+    Description: "Name of the CF stack associated with the instrastrure codepipeline step within the be-awsInfra-ecsCluster project"
+
+Resources:
+  CodeBuild:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Description: 'Build and deploy container to ECR'
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:2.0
+        PrivilegedMode: true
+        EnvironmentVariables:
+          - Name: IMAGE_REPO_NAME
+            Type: PLAINTEXT
+            Value: 
+              Fn::ImportValue:
+                !Sub "${EcsClusterStackName}-${BranchName}:ECRRepositoryName"
+          - Name: IMAGE_TAG
+            Type: PLAINTEXT
+            Value: !Ref ExecutionId
+          - Name: AWS_ACCOUNT_ID
+            Type: PLAINTEXT
+            Value: !Ref AWS::AccountId
+          - Name: AWS_DEFAULT_REGION
+            Type: PLAINTEXT
+            Value: !Ref AWS::Region
+      Name: !Sub "${ProjectName}-build-${BranchName}"
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source:
+        Type: CODEPIPELINE
+
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSCodeBuildAdminAccess
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+      Policies:
+        - PolicyName: code-build
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecr:*
+                Resource: "*"
