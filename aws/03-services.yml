@@ -68,7 +68,7 @@ Resources:
       LaunchType: EC2
       LoadBalancers:
         - ContainerName: !Sub "${ProjectName}-${BranchName}"
-          ContainerPort: 80
+          ContainerPort: 5001
           TargetGroupArn: !Ref LoadBalancerTargetGroup
       SchedulingStrategy: REPLICA
       ServiceName: !Sub "${ProjectName}-${BranchName}"
@@ -117,7 +117,7 @@ Resources:
             - Name: LOGGING__ENABLED
               Value: "true"
           PortMappings:
-            - ContainerPort: 80
+            - ContainerPort: 5001
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -136,7 +136,7 @@ Resources:
     Properties:
       TargetType: instance
       Protocol: HTTP
-      Port: 80
+      Port: 5001
       HealthCheckEnabled: true
       HealthCheckIntervalSeconds: 30
       HealthCheckPath: /reco-mvp
