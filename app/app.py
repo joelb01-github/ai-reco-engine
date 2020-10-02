@@ -3,15 +3,10 @@ import json
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 
-@app.route('/', methods=['GET'])
+@app.route('/reco-mvp', methods=['GET'])
 def root():
-  return "Welcome to the Flask server"
-
-@app.route('/healthcheck', methods=['GET'])
-def healthcheck():
   print('healtcheck OK')
-  
-  return "healtcheck OK"
+  return "Welcome to the Flask server"
 
 @app.route('/reco', methods=['POST'])
 def reco():

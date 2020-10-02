@@ -139,7 +139,7 @@ Resources:
       Port: 80
       HealthCheckEnabled: true
       HealthCheckIntervalSeconds: 30
-      HealthCheckPath: /movieInfo
+      HealthCheckPath: /reco-mvp
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
