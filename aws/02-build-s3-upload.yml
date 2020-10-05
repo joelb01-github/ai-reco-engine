@@ -1,0 +1,65 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "codeBuild project to upload S3 files"
+
+Parameters:
+  ProjectName:
+    Type: String
+  BranchName:
+    Type: String
+    Description: "The deployment environment" 
+    AllowedValues:
+      - "dev"
+      - "uat"
+      - "master"
+  BucketName:
+    Description: "Name of the S3 Bucket name containing the files"
+    Type: "String"
+    ConstraintDescription: "Valid S3 bucket name."
+
+Resources:
+  CodeBuild:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Description: 'Upload files to S3'
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:2.0
+        PrivilegedMode: true
+        EnvironmentVariables:
+          - Name: BUCKET_NAME
+            Type: PLAINTEXT
+            Value: !Ref BucketName
+      Name: !Sub "${ProjectName}-build-s3-upload-${BranchName}"
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: "buildspec-s3-upload.yml"
+
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSCodeBuildAdminAccess
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+      Policies:
+        - PolicyName: code-build-s3-upload
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecr:*
+                Resource: "*"

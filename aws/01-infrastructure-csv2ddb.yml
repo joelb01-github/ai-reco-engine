@@ -173,7 +173,7 @@ Resources:
       - BucketPermission
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: !Sub "${ProjectName}-csv2ddb-${BranchName}-AWS::AccountId"
+      BucketName: !Sub "${ProjectName}-csv2ddb-${BranchName}-${AWS::AccountId}"
       AccessControl: BucketOwnerFullControl
       NotificationConfiguration:
         LambdaConfigurations:
