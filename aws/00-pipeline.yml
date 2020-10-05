@@ -116,7 +116,7 @@ Resources:
                   }
               InputArtifacts:
                 - Name: !Ref ProjectName
-              RunOrder: 1
+              RunOrder: 2
         - Name: "deploy-codeBuild-s3-upload"
           Actions:
             - Name: "deploy-codeBuild-s3-upload"
