@@ -1,0 +1,193 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "Update to 01-Infrastructure-csv2ddb.yml this to avoid circular dependcies, first create all resources and then add relations between them"
+
+Parameters:
+  ProjectName:
+    Type: String
+  BranchName:
+    Type: String
+    Description: "The deployment environment" 
+    AllowedValues:
+      - "dev"
+      - "uat"
+      - "master"
+  FileName:
+    Description: "Name of the S3 file (including suffix)"
+    Type: "String"
+    Default: "links.csv"
+    ConstraintDescription: "Valid S3 file name."
+
+Resources:
+  DynamoDBTable:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: !Sub "${ProjectName}-links-${BranchName}"
+      BillingMode: PROVISIONED
+      AttributeDefinitions:
+        - AttributeName: movieId
+          AttributeType: N
+        - AttributeName: imdbId
+          AttributeType: N
+      KeySchema:
+        - AttributeName: movieId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: imdbIndex
+          KeySchema: 
+            - AttributeName: imdbId
+              KeyType: HASH
+          Projection: 
+            ProjectionType: "ALL"
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+  LambdaRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+                - s3.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+        - 'arn:aws:iam::aws:policy/AWSLambdaInvocation-DynamoDB'
+        - 'arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess'
+      Policies:
+        - PolicyName: policyname
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Resource: '*'
+                Action:
+                  - 'dynamodb:PutItem'
+                  - 'dynamodb:BatchWriteItem'
+
+  CsvToDDBLambdaFunction:
+    Type: 'AWS::Lambda::Function'
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+          - E3004 ## ignore circular dependencies errors
+    Properties:
+      Handler: index.lambda_handler
+      Role: !GetAtt 
+        - LambdaRole
+        - Arn
+      Code:
+        ZipFile: !Join 
+          - |+
+          - - import json
+            - import boto3
+            - import os
+            - import csv
+            - import codecs
+            - import sys
+            - ''
+            - s3 = boto3.resource('s3')
+            - dynamodb = boto3.resource('dynamodb')
+            - ''
+            - 'bucket = os.environ[''bucket'']'
+            - 'key = os.environ[''key'']'
+            - 'tableName = os.environ[''table'']'
+            - ''
+            - 'def lambda_handler(event, context):'
+            - ''
+            - ''
+            - '   #get() does not store in memory'
+            - '   try:'
+            - '       obj = s3.Object(bucket, key).get()[''Body'']'
+            - '   except:'
+            - '       print("S3 Object could not be opened. Check environment variable. ")'
+            - '   try:'
+            - '       table = dynamodb.Table(tableName)'
+            - '   except:'
+            - '       print("Error loading DynamoDB table. Check if table was created correctly and environment variable.")'
+            - ''
+            - '   batch_size = 100'
+            - '   batch = []'
+            - ''
+            - '   #DictReader is a generator; not stored in memory'
+            - '   for row in csv.DictReader(codecs.getreader(''utf-8'')(obj)):'
+            - '      if len(batch) >= batch_size:'
+            - '         write_to_dynamo(batch)'
+            - '         batch.clear()'
+            - ''
+            - '      batch.append(row)'
+            - ''
+            - '   if batch:'
+            - '      write_to_dynamo(batch)'
+            - ''
+            - '   return {'
+            - '      ''statusCode'': 200,'
+            - '      ''body'': json.dumps(''Uploaded to DynamoDB Table'')'
+            - '   }'
+            - ''
+            - ''
+            - 'def write_to_dynamo(rows):'
+            - '   try:'
+            - '      table = dynamodb.Table(tableName)'
+            - '   except:'
+            - '      print("Error loading DynamoDB table. Check if table was created correctly and environment variable.")'
+            - ''
+            - '   try:'
+            - '      with table.batch_writer() as batch:'
+            - '         for i in range(len(rows)):'
+            - '            batch.put_item('
+            - '               Item=rows[i]'
+            - '            )'
+            - '   except:'
+            - '      print("Error executing batch_writer")'
+      Runtime: python3.7
+      Timeout: 900
+      MemorySize: 3008
+      Environment:
+        Variables:
+          bucket: !Ref S3Bucket
+          key: !Ref FileName
+          table: !Ref DynamoDBTable
+    
+  BucketPermission:
+    Type: 'AWS::Lambda::Permission'
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+          - E3004 ## ignore circular dependencies errors
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref CsvToDDBLambdaFunction
+      Principal: s3.amazonaws.com
+      SourceAccount: !Ref 'AWS::AccountId'
+
+  S3Bucket:
+    ## update addition
+    DependsOn:
+      - BucketPermission
+    Type: 'AWS::S3::Bucket'
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+          - E3004 ## ignore circular dependencies errors
+    Properties:
+      AccessControl: BucketOwnerFullControl
+      ## update addition
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: 's3:ObjectCreated:*'
+            Function: !GetAtt 
+              - CsvToDDBLambdaFunction
+              - Arn
+
+Outputs: {}

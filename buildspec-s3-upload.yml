@@ -1,0 +1,15 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo "commands steps"
+  build:
+    commands:
+      - echo "build steps"
+      - aws s3 sync "./csv2ddb/data" "s3://$BUCKET_NAME"
+  post_build:
+    commands:
+      - echo "post build steps"
+
+# sample: https://docs.aws.amazon.com/codebuild/latest/userguide/sample-docker.html

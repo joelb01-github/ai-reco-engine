@@ -1,6 +1,5 @@
-#### TEMPORARY - DELETE AFTER ####
-app/data/
-
+# General ML data that will not be used at MVP stage
+backup_data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

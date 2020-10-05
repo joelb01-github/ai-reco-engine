@@ -63,9 +63,9 @@ Resources:
               OutputArtifacts:
                 - Name: !Ref ProjectName
               RunOrder: 1
-        - Name: "Deploy-CodeBuild"
+        - Name: "Deploy-Infrastructure-csv2ddb"
           Actions:
-            - Name: "Deploy-CodeBuild"
+            - Name: "Deploy-Infrastructure-csv2ddb"
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -73,8 +73,97 @@ Resources:
                 Version: "1"
               Configuration:
                 ActionMode: CREATE_UPDATE
-                StackName: !Sub "${ProjectName}-build-${BranchName}"
-                TemplatePath: !Sub "${ProjectName}::aws/02-build.yml"
+                Capabilities: "CAPABILITY_NAMED_IAM"
+                StackName: !Sub "${ProjectName}-infra-csv2ddb-${BranchName}"
+                TemplatePath: !Sub "${ProjectName}::aws/01-infrastructure-csv2ddb.yml"
+                RoleArn: !GetAtt DeployRole.Arn
+                ParameterOverrides: !Sub |
+                  {
+                    "BranchName": "${BranchName}",
+                    "ProjectName": "${ProjectName}"
+                  }
+              InputArtifacts:
+                - Name: !Ref ProjectName
+              RunOrder: 1
+        - Name: "Deploy-Infrastructure-update"
+          Actions:
+            - Name: "Deploy-Infrastructure-update"
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: "1"
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                Capabilities: "CAPABILITY_NAMED_IAM"
+                OutputFileName: InfrastructureOutput.json
+                StackName: !Sub "${ProjectName}-infra-csv2ddb-${BranchName}"
+                TemplatePath: !Sub "${ProjectName}::aws/02-infrastructure-csv2ddb-update.yml"
+                RoleArn: !GetAtt DeployRole.Arn
+                ParameterOverrides: !Sub |
+                  {
+                    "BranchName": "${BranchName}",
+                    "ProjectName": "${ProjectName}"
+                  }
+              InputArtifacts:
+                - Name: !Ref ProjectName
+              OutputArtifacts:
+                - Name: InfrastructureOutput
+              RunOrder: 2
+        - Name: "codeBuild-s3-upload"
+          Actions:
+            - Name: "codeBuild-s3-upload"
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: "1"
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                StackName: !Sub "${ProjectName}-build-s3-upload-${BranchName}"
+                TemplatePath: !Sub "${ProjectName}::aws/03-build-s3-upload.yml"
+                Capabilities: "CAPABILITY_NAMED_IAM"
+                RoleArn: !GetAtt DeployRole.Arn
+                ParameterOverrides: !Sub |
+                  {
+                    "ProjectName": "${ProjectName}",
+                    "BranchName": "${BranchName}",
+                    "BucketName": {
+                      "Fn::GetParam": [
+                        "InfrastructureOutput",
+                        "InfrastructureOutput.json",
+                        "BucketName"
+                      ]
+                    }
+                  }
+              InputArtifacts:
+                - Name: !Ref ProjectName
+              RunOrder: 1
+        - Name: "deploy-codeBuild-s3-upload"
+          Actions:
+            - Name: "deploy-codeBuild-s3-upload"
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: "1"
+              Configuration:
+                ProjectName: !Sub ${ProjectName}-build-s3-upload-${BranchName}
+              InputArtifacts:
+                - Name: !Ref ProjectName
+              RunOrder: 3
+        - Name: "CodeBuild-docker"
+          Actions:
+            - Name: "CodeBuild-docker"
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: "1"
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                StackName: !Sub "${ProjectName}-build-docker-${BranchName}"
+                TemplatePath: !Sub "${ProjectName}::aws/04-build-docker.yml"
                 Capabilities: "CAPABILITY_NAMED_IAM"
                 RoleArn: !GetAtt DeployRole.Arn
                 ParameterOverrides: !Sub |
@@ -87,19 +176,19 @@ Resources:
               InputArtifacts:
                 - Name: !Ref ProjectName
               RunOrder: 1
-        - Name: "Build-Docker-Container"
+        - Name: "Deploy-CodeBuild-docker"
           Actions:
-            - Name: "Build-Docker-Container"
+            - Name: "Deploy-CodeBuild-docker"
               ActionTypeId:
                 Category: Build
                 Owner: AWS
                 Provider: CodeBuild
                 Version: "1"
               Configuration:
-                ProjectName: !Sub ${ProjectName}-build-${BranchName}
+                ProjectName: !Sub ${ProjectName}-build-docker-${BranchName}
               InputArtifacts:
                 - Name: !Ref ProjectName
-              RunOrder: 2
+              RunOrder: 3
         - Name: "Deploy-Services"
           Actions:
             - Name: "Deploy-Services"
@@ -111,7 +200,7 @@ Resources:
               Configuration:
                 ActionMode: CREATE_UPDATE
                 StackName: !Sub "${ProjectName}-services-${BranchName}"
-                TemplatePath: !Sub "${ProjectName}::aws/03-services.yml"
+                TemplatePath: !Sub "${ProjectName}::aws/05-services.yml"
                 Capabilities: "CAPABILITY_NAMED_IAM"
                 RoleArn: !GetAtt DeployRole.Arn
                 ParameterOverrides: !Sub |
@@ -124,7 +213,7 @@ Resources:
                   }
               InputArtifacts:
                 - Name: !Ref ProjectName
-              RunOrder: 3
+              RunOrder: 4
 
   PipelineWebhook:
     Type: AWS::CodePipeline::Webhook
