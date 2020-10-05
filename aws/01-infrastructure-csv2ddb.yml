@@ -182,4 +182,9 @@ Resources:
               - CsvToDDBLambdaFunction
               - Arn
 
-Outputs: {}
+Outputs:
+  BucketName:
+    Description: S3 Bucket name
+    Value: !Ref S3Bucket
+    Export:
+      Name: !Sub "${AWS::StackName}:BucketName"
