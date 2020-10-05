@@ -22,14 +22,6 @@ Parameters:
     Type: "String"
     Default: "links.csv"
     ConstraintDescription: "Valid S3 file name."
-  LambdaBucketName:
-    Description: "S3 Bucket name that is holding the lambda code"
-    Type: "String"
-    ConstraintDescription: "Valid S3 Bucket name."
-  LambdaOjectKey:
-    Description: "S3 key to the file with the lambda code"
-    Type: "String"
-    ConstraintDescription: "Valid S3 key."
 
 Resources:
   DynamoDBTable:
@@ -91,13 +83,75 @@ Resources:
   CsvToDDBLambdaFunction:
     Type: 'AWS::Lambda::Function'
     Properties:
-      Handler: csv2dbb/lambda/__init__.lambda_handler
+      Handler: index.lambda_handler
       Role: !GetAtt 
         - LambdaRole
         - Arn
       Code:
-        S3Bucket: !Ref LambdaBucketName
-        S3Key: !Ref LambdaOjectKey
+        ZipFile: !Join 
+          - |+
+
+          - - import json
+            - import boto3
+            - import os
+            - import csv
+            - import codecs
+            - import sys
+            - ''
+            - s3 = boto3.resource('s3')
+            - dynamodb = boto3.resource('dynamodb')
+            - ''
+            - 'bucket = os.environ[''bucket'']'
+            - 'key = os.environ[''key'']'
+            - 'tableName = os.environ[''table'']'
+            - ''
+            - 'def lambda_handler(event, context):'
+            - ''
+            - ''
+            - '   #get() does not store in memory'
+            - '   try:'
+            - '       obj = s3.Object(bucket, key).get()[''Body'']'
+            - '   except:'
+            - '       print("S3 Object could not be opened. Check environment variable. ")'
+            - '   try:'
+            - '       table = dynamodb.Table(tableName)'
+            - '   except:'
+            - '       print("Error loading DynamoDB table. Check if table was created correctly and environment variable.")'
+            - ''
+            - '   batch_size = 100'
+            - '   batch = []'
+            - ''
+            - '   #DictReader is a generator; not stored in memory'
+            - '   for row in csv.DictReader(codecs.getreader(''utf-8'')(obj)):'
+            - '      if len(batch) >= batch_size:'
+            - '         write_to_dynamo(batch)'
+            - '         batch.clear()'
+            - ''
+            - '      batch.append(row)'
+            - ''
+            - '   if batch:'
+            - '      write_to_dynamo(batch)'
+            - ''
+            - '   return {'
+            - '      ''statusCode'': 200,'
+            - '      ''body'': json.dumps(''Uploaded to DynamoDB Table'')'
+            - '   }'
+            - ''
+            - ''
+            - 'def write_to_dynamo(rows):'
+            - '   try:'
+            - '      table = dynamodb.Table(tableName)'
+            - '   except:'
+            - '      print("Error loading DynamoDB table. Check if table was created correctly and environment variable.")'
+            - ''
+            - '   try:'
+            - '      with table.batch_writer() as batch:'
+            - '         for i in range(len(rows)):'
+            - '            batch.put_item('
+            - '               Item=rows[i]'
+            - '            )'
+            - '   except:'
+            - '      print("Error executing batch_writer")'
       Runtime: python3.7
       Timeout: 900
       MemorySize: 3008

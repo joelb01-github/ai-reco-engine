@@ -81,19 +81,7 @@ Resources:
                 ParameterOverrides: !Sub |
                   {
                     "BranchName": "${BranchName}",
-                    "ProjectName": "${ProjectName}",
-                    "LambdaBucketName": {
-                      "Fn::GetArtifactAtt": [
-                        "${ProjectName}",
-                        "BucketName"
-                      ]
-                    },
-                    "LambdaOjectKey": {
-                      "Fn::GetArtifactAtt": [
-                        "${ProjectName}",
-                        "ObjectKey"
-                      ]
-                    }
+                    "ProjectName": "${ProjectName}"
                   }
               InputArtifacts:
                 - Name: !Ref ProjectName
