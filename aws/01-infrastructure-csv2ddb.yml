@@ -151,7 +151,7 @@ Resources:
             - '               Item=rows[i]'
             - '            )'
             - '   except:'
-            - '      print("Error executing batch_writer")'
+            - '      print("Error executing batch_writer", sys.exc_info()[0])'
       Runtime: python3.7
       Timeout: 900
       MemorySize: 3008
