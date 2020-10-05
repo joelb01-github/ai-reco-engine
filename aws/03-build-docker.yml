@@ -46,7 +46,7 @@ Resources:
           - Name: AWS_DEFAULT_REGION
             Type: PLAINTEXT
             Value: !Ref AWS::Region
-      Name: !Sub "${ProjectName}-build-${BranchName}"
+      Name: !Sub "${ProjectName}-build-docker-${BranchName}"
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Source:
         Type: CODEPIPELINE
