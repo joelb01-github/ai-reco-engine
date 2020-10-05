@@ -116,6 +116,7 @@ Resources:
                   }
               InputArtifacts:
                 - Name: !Ref ProjectName
+                - Name: InfrastructureOutput
               RunOrder: 2
         - Name: "deploy-codeBuild-s3-upload"
           Actions:
@@ -153,7 +154,7 @@ Resources:
                   }
               InputArtifacts:
                 - Name: !Ref ProjectName
-              RunOrder: 1
+              RunOrder: 2
         - Name: "Deploy-CodeBuild-docker"
           Actions:
             - Name: "Deploy-CodeBuild-docker"
