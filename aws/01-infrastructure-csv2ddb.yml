@@ -148,6 +148,7 @@ Resources:
             - '   try:'
             - '      with table.batch_writer() as batch:'
             - '         for i in range(len(rows)):'
+            - '            print("item being added", rows[i])'
             - '            batch.put_item('
             - '               Item=int(rows[i], 10)'
             - '            )'
