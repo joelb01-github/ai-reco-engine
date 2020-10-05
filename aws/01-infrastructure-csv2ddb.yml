@@ -149,7 +149,7 @@ Resources:
             - '      with table.batch_writer() as batch:'
             - '         for i in range(len(rows)):'
             - '            batch.put_item('
-            - '               Item=rows[i]'
+            - '               Item=int(rows[i], 10)'
             - '            )'
             - '   except botocore.exceptions.ClientError as error:'
             - '      print("ClientError executing batch_writer")'
