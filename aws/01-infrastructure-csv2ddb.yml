@@ -31,9 +31,9 @@ Resources:
       BillingMode: PROVISIONED
       AttributeDefinitions:
         - AttributeName: movieId
-          AttributeType: N
+          AttributeType: S
         - AttributeName: imdbId
-          AttributeType: N
+          AttributeType: S
       KeySchema:
         - AttributeName: movieId
           KeyType: HASH
@@ -150,7 +150,7 @@ Resources:
             - '         for i in range(len(rows)):'
             - '            print("item being added", rows[i])'
             - '            batch.put_item('
-            - '               Item=int(rows[i], 10)'
+            - '               Item=rows[i]'
             - '            )'
             - '   except botocore.exceptions.ClientError as error:'
             - '      print("ClientError executing batch_writer")'
