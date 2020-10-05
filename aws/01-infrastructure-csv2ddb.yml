@@ -91,7 +91,7 @@ Resources:
   CsvToDDBLambdaFunction:
     Type: 'AWS::Lambda::Function'
     Properties:
-      Handler: csv2dbb/lambda/index.lambda_handler
+      Handler: /csv2dbb/lambda/index.lambda_handler
       Role: !GetAtt 
         - LambdaRole
         - Arn
