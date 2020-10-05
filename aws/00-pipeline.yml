@@ -74,6 +74,7 @@ Resources:
               Configuration:
                 ActionMode: CREATE_UPDATE
                 Capabilities: "CAPABILITY_NAMED_IAM"
+                OutputFileName: InfrastructureOutput.json
                 StackName: !Sub "${ProjectName}-infra-csv2ddb-${BranchName}"
                 TemplatePath: !Sub "${ProjectName}::aws/01-infrastructure-csv2ddb.yml"
                 RoleArn: !GetAtt DeployRole.Arn
@@ -84,32 +85,9 @@ Resources:
                   }
               InputArtifacts:
                 - Name: !Ref ProjectName
-              RunOrder: 1
-        - Name: "Deploy-Infrastructure-update"
-          Actions:
-            - Name: "Deploy-Infrastructure-update"
-              ActionTypeId:
-                Category: Deploy
-                Owner: AWS
-                Provider: CloudFormation
-                Version: "1"
-              Configuration:
-                ActionMode: CREATE_UPDATE
-                Capabilities: "CAPABILITY_NAMED_IAM"
-                OutputFileName: InfrastructureOutput.json
-                StackName: !Sub "${ProjectName}-infra-csv2ddb-${BranchName}"
-                TemplatePath: !Sub "${ProjectName}::aws/02-infrastructure-csv2ddb-update.yml"
-                RoleArn: !GetAtt DeployRole.Arn
-                ParameterOverrides: !Sub |
-                  {
-                    "BranchName": "${BranchName}",
-                    "ProjectName": "${ProjectName}"
-                  }
-              InputArtifacts:
-                - Name: !Ref ProjectName
               OutputArtifacts:
                 - Name: InfrastructureOutput
-              RunOrder: 2
+              RunOrder: 1
         - Name: "codeBuild-s3-upload"
           Actions:
             - Name: "codeBuild-s3-upload"
@@ -121,7 +99,7 @@ Resources:
               Configuration:
                 ActionMode: CREATE_UPDATE
                 StackName: !Sub "${ProjectName}-build-s3-upload-${BranchName}"
-                TemplatePath: !Sub "${ProjectName}::aws/03-build-s3-upload.yml"
+                TemplatePath: !Sub "${ProjectName}::aws/02-build-s3-upload.yml"
                 Capabilities: "CAPABILITY_NAMED_IAM"
                 RoleArn: !GetAtt DeployRole.Arn
                 ParameterOverrides: !Sub |
@@ -163,7 +141,7 @@ Resources:
               Configuration:
                 ActionMode: CREATE_UPDATE
                 StackName: !Sub "${ProjectName}-build-docker-${BranchName}"
-                TemplatePath: !Sub "${ProjectName}::aws/04-build-docker.yml"
+                TemplatePath: !Sub "${ProjectName}::aws/03-build-docker.yml"
                 Capabilities: "CAPABILITY_NAMED_IAM"
                 RoleArn: !GetAtt DeployRole.Arn
                 ParameterOverrides: !Sub |
@@ -200,7 +178,7 @@ Resources:
               Configuration:
                 ActionMode: CREATE_UPDATE
                 StackName: !Sub "${ProjectName}-services-${BranchName}"
-                TemplatePath: !Sub "${ProjectName}::aws/05-services.yml"
+                TemplatePath: !Sub "${ProjectName}::aws/04-services.yml"
                 Capabilities: "CAPABILITY_NAMED_IAM"
                 RoleArn: !GetAtt DeployRole.Arn
                 ParameterOverrides: !Sub |

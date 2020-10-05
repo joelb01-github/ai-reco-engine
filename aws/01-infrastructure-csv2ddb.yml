@@ -156,7 +156,7 @@ Resources:
       MemorySize: 3008
       Environment:
         Variables:
-          bucket: !Ref S3Bucket
+          bucket: !Sub "${ProjectName}-csv2ddb-${BranchName}-AWS::AccountId"
           key: !Ref FileName
           table: !Ref DynamoDBTable
     
@@ -169,19 +169,17 @@ Resources:
       SourceAccount: !Ref 'AWS::AccountId'
 
   S3Bucket:
-    ## Will be added in the updated template at the next codePipeline step
-    # DependsOn:
-    #   - CsvToDDBLambdaFunction
-    #   - BucketPermission
+    DependsOn:
+      - BucketPermission
     Type: 'AWS::S3::Bucket'
     Properties:
+      BucketName: !Sub "${ProjectName}-csv2ddb-${BranchName}-AWS::AccountId"
       AccessControl: BucketOwnerFullControl
-      ## Will be added in the updated template at the next codePipeline step
-      # NotificationConfiguration:
-      #   LambdaConfigurations:
-      #     - Event: 's3:ObjectCreated:*'
-      #       Function: !GetAtt 
-      #         - CsvToDDBLambdaFunction
-      #         - Arn
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: 's3:ObjectCreated:*'
+            Function: !GetAtt 
+              - CsvToDDBLambdaFunction
+              - Arn
 
 Outputs: {}
