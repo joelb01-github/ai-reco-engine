@@ -150,8 +150,12 @@ Resources:
             - '            batch.put_item('
             - '               Item=rows[i]'
             - '            )'
+            - '   except botocore.exceptions.ClientError as error:'
+            - '      print("ClientError executing batch_writer")'
+            - '      print(error)'
+            - '      print(error.response)'
             - '   except:'
-            - '      print("Error executing batch_writer", sys.exc_info()[0])'
+            - '      print("Error executing batch_writer")'
       Runtime: python3.7
       Timeout: 900
       MemorySize: 3008
