@@ -97,6 +97,7 @@ Resources:
             - import csv
             - import codecs
             - import sys
+            - import botocore
             - ''
             - s3 = boto3.resource('s3')
             - dynamodb = boto3.resource('dynamodb')
