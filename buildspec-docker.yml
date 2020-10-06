@@ -2,8 +2,8 @@ version: 0.2
 
 env:
   secrets-manager:
-    DOCKER_USERNAME: dockerHub:username
-    DOCKER_PASSWORD: dockerHub:password
+    DOCKER_USERNAME: $SECRET_NAME:username
+    DOCKER_PASSWORD: $SECRET_NAME:password
 
 phases:
   pre_build:

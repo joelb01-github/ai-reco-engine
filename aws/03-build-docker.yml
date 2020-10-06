@@ -18,6 +18,14 @@ Parameters:
   EcsClusterStackName:
     Type: String
     Description: "Name of the CF stack associated with the instrastrure codepipeline step within the be-awsInfra-ecsCluster project"
+  DockerHubSecretName:
+    Type: String
+    Description: "Name of the secret manager entry for dockerhub credentials"
+    Default: "dockerHub"
+  DockerHubSecretARN:
+    Type: String
+    Description: "ARN of the secret manager entry for dockerhub credentials"
+    Default: "arn:aws:secretsmanager:eu-west-1:073919355633:secret:dockerHub-1WJ0Uo"
 
 Resources:
   CodeBuild:
@@ -46,6 +54,9 @@ Resources:
           - Name: AWS_DEFAULT_REGION
             Type: PLAINTEXT
             Value: !Ref AWS::Region
+          - Name: SECRET_NAME
+            Type: PLAINTEXT
+            Value: !Ref DockerHubSecretName
       Name: !Sub "${ProjectName}-build-docker-${BranchName}"
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Source:
@@ -76,3 +87,10 @@ Resources:
                 Action:
                   - ecr:*
                 Resource: "*"
+        - PolicyName: dockerhub-secret-access
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !Ref DockerHubSecretARN
