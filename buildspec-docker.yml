@@ -1,8 +1,15 @@
 version: 0.2
 
+env:
+  secrets-manager:
+    DOCKER_USERNAME: dockerHub:username
+    DOCKER_PASSWORD: dockerHub:password
+
 phases:
   pre_build:
     commands:
+      - echo Logging to Docker hub
+      - docker login -p $DOCKER_PASSWORD -u DOCKER_USERNAME
       - echo Logging in to Amazon ECR...
       - $(aws ecr get-login --no-include-email --region $AWS_DEFAULT_REGION)
   build:
