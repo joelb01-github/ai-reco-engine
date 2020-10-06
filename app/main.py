@@ -8,7 +8,12 @@ import logging
 
 app = Flask(__name__)
 
-logging.info("Starting up the fire..")
+logging.basicConfig(
+  level=os.environ['LOGGING_LEVEL'],
+  format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s'
+)
+
+app.logger.info("Starting up the fire..")
 
 dynamodb = boto3.resource('dynamodb')
 linksTableName = os.environ['LINKS_TABLE']
@@ -17,17 +22,21 @@ indexName = os.environ['INDEX_NAME']
 try:
   ddbTable = dynamodb.Table(linksTableName)
 except:
-  logging.info("Error loading DynamoDB table. Check if table was created correctly and environment variable.")
+  app.logger.error("Error loading DynamoDB table. Check if table was created correctly and environment variable.")
 
 data = reco.loadData()
 algo = reco.initialiseEngine(data)
 
 @app.route('/reco-mvp', methods=['GET'])
 def root():
+  app.logger.info("Processing request at {}".format(request.path))
+
   return "Welcome to the Flask server"
 
 @app.route('/reco-mvp/top-reco', methods=['POST'])
 def topReco():
+  app.logger.info("Processing request at {}".format(request.path))
+
   requestInput = json.loads(request.data)
 
   rating_dict = utils.processRequestInput(requestInput, ddbTable, indexName)
@@ -39,4 +48,5 @@ def topReco():
   return json.dumps(result)
  
 if __name__ == "__main__":
-    app.run(debug=True, port='5001', host='0.0.0.0')
+  app.logger.info("Running app in debugging mode")
+  app.run(debug=True, port='5001', host='0.0.0.0')

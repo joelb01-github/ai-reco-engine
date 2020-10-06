@@ -118,6 +118,8 @@ Resources:
               Value: "app.py"
             - Name: FLASK_ENV
               Value: "production"
+            - Name: LOGGING_LEVEL
+              Value: "DEBUG"
             - Name: LINKS_TABLE
               Value: !Ref DynamoLinksTable
             - Name: INDEX_NAME
