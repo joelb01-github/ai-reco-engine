@@ -22,6 +22,11 @@ Parameters:
     Type: "String"
     Default: "links.csv"
     ConstraintDescription: "Valid S3 file name."
+  ImdbIndexName:
+    Description: "Name for the dynamodb imdb index."
+    Type: "String"
+    Default: "imdbIndex"
+    ConstraintDescription: "Valid dynamoDB index name."
 
 Resources:
   DynamoDBTable:
@@ -38,7 +43,7 @@ Resources:
         - AttributeName: movieId
           KeyType: HASH
       GlobalSecondaryIndexes:
-        - IndexName: "imdbIndex"
+        - IndexName: !Ref ImdbIndexName
           KeySchema: 
             - AttributeName: imdbId
               KeyType: HASH
@@ -190,8 +195,13 @@ Resources:
               - Arn
 
 Outputs:
-  BucketName:
-    Description: S3 Bucket name
-    Value: !Ref S3Bucket
+  DynamoLinksTable:
+    Description: "Name of the dynamoDB table containing the conversion between movieID, imdbId, and omdbId."
+    Value: !Ref DynamoDBTable
     Export:
-      Name: !Sub "${AWS::StackName}:BucketName"
+      Name: !Sub "${AWS::StackName}:DynamoLinksTable"
+  ImdbIndexName:
+    Description: "Name for the dynamodb imdb index."
+    Value: !Ref ImdbIndexName
+    Export:
+      Name: !Sub "${AWS::StackName}:ImdbIndexName"

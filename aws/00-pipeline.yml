@@ -111,7 +111,7 @@ Resources:
                   }
               InputArtifacts:
                 - Name: !Ref ProjectName
-              RunOrder: 2
+              RunOrder: 1
         - Name: "Deploy-CodeBuild-docker"
           Actions:
             - Name: "Deploy-CodeBuild-docker"
@@ -124,7 +124,7 @@ Resources:
                 ProjectName: !Sub ${ProjectName}-build-docker-${BranchName}
               InputArtifacts:
                 - Name: !Ref ProjectName
-              RunOrder: 3
+              RunOrder: 1
         - Name: "Deploy-Services"
           Actions:
             - Name: "Deploy-Services"
@@ -145,11 +145,26 @@ Resources:
                     "ExecutionId": "#{codepipeline.PipelineExecutionId}",
                     "BranchName": "${BranchName}",
                     "NetworkingStackName": "${NetworkingStackName}",
-                    "EcsClusterStackName": "${EcsClusterStackName}"
+                    "EcsClusterStackName": "${EcsClusterStackName}",
+                    "DynamoLinksTable": {
+                      "Fn::GetParam": [
+                        "InfrastructureOutput",
+                        "InfrastructureOutput.json",
+                        "DynamoLinksTable"
+                      ]
+                    },
+                    "ImdbIndexName": {
+                      "Fn::GetParam": [
+                        "InfrastructureOutput",
+                        "InfrastructureOutput.json",
+                        "ImdbIndexName"
+                      ]
+                    }
                   }
               InputArtifacts:
                 - Name: !Ref ProjectName
-              RunOrder: 4
+                - Name: InfrastructureOutput
+              RunOrder: 1
 
   PipelineWebhook:
     Type: AWS::CodePipeline::Webhook
