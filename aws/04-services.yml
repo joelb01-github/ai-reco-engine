@@ -74,7 +74,7 @@ Resources:
       LaunchType: EC2
       LoadBalancers:
         - ContainerName: !Sub "${ProjectName}-${BranchName}"
-          ContainerPort: 5001
+          ContainerPort: 80
           TargetGroupArn: !Ref LoadBalancerTargetGroup
       SchedulingStrategy: REPLICA
       ServiceName: !Sub "${ProjectName}-${BranchName}"
@@ -114,12 +114,6 @@ Resources:
           Environment:
             - Name: DEV_ENV
               Value: !Ref BranchName
-            - Name: SERVER__NAME
-              Value: !Sub "${ProjectName}-${BranchName}"
-            - Name: SERVER__PORT
-              Value: "5001"
-            - Name: LOGGING__ENABLED
-              Value: "true"
             - Name: FLASK_APP
               Value: "app.py"
             - Name: FLASK_ENV
@@ -131,7 +125,7 @@ Resources:
             - Name: AWS_DEFAULT_REGION
               Value: !Ref AWS::Region
           PortMappings:
-            - ContainerPort: 5001
+            - ContainerPort: 80
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -150,7 +144,7 @@ Resources:
     Properties:
       TargetType: instance
       Protocol: HTTP
-      Port: 5001
+      Port: 80
       HealthCheckEnabled: true
       HealthCheckIntervalSeconds: 30
       HealthCheckPath: /reco-mvp
