@@ -13,4 +13,4 @@ COPY . /app
 
 EXPOSE 5001
 
-CMD python app.py
+CMD python -m flask run -p 5001

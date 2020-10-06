@@ -35,15 +35,12 @@ def topReco():
 
     result = utils.processReco(recommendations)
 
-    return json.dumps({
-      'StatusCode': 200,
-      'body': result
-    })
+    return json.dumps(result)
   except:
-    return json.dumps({
+    return {
       'StatusCode': 500,
       'body': 'Error'
-    })
+    }
  
 if __name__ == "__main__":
     app.run(debug=True, port='5001', host='0.0.0.0')
