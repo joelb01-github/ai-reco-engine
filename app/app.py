@@ -1,12 +1,23 @@
 from flask import Flask, request
+import lib.useruser_reco as reco
+import lib.utils as utils
 import json
+import boto3
+import os
 
-app = Flask(__name__, static_folder='.', static_url_path='')
+app = Flask(__name__)
 
-jsonInput = '[ {"movieId": 3, "rating": 4.0}, {"movieId": 6, "rating": 4.0}, {"movieId": 47, "rating": 5.0}, {"movieId": 50, "rating": 5.0}, {"movieId": 70, "rating": 3.0}, {"movieId": 101, "rating": 5.0}, {"movieId": 110, "rating": 4.0}, {"movieId": 151, "rating": 5.0}, {"movieId": 157, "rating": 5.0}, {"movieId": 163, "rating": 5.0} ]'
+dynamodb = boto3.resource('dynamodb')
+linksTableName = os.environ['LINKS_TABLE']
+indexName = os.environ['INDEX_NAME']
 
-data = loadData()
-algo = initialiseEngine(data)
+try:
+  ddbTable = dynamodb.Table(linksTableName)
+except:
+  print("Error loading DynamoDB table. Check if table was created correctly and environment variable.")
+
+data = reco.loadData()
+algo = reco.initialiseEngine(data)
 
 @app.route('/reco-mvp', methods=['GET'])
 def root():
@@ -14,12 +25,25 @@ def root():
   return "Welcome to the Flask server"
 
 @app.route('/reco-mvp/top-reco', methods=['POST'])
-def reco():
-  requestInput = json.loads(request.data)
+def topReco():
+  try:
+    requestInput = json.loads(request.data)
 
-  recommendations = getReco(algo, data, requestInput)
+    rating_dict = utils.processRequestInput(requestInput, ddbTable, indexName)
 
-  return json.dumps(recommendations)
+    recommendations = reco.getReco(algo, data, rating_dict)
+
+    result = utils.processReco(recommendations)
+
+    return json.dumps({
+      'StatusCode': 200,
+      'body': result
+    })
+  except:
+    return json.dumps({
+      'StatusCode': 500,
+      'body': 'Error'
+    })
  
 if __name__ == "__main__":
     app.run(debug=True, port='5001', host='0.0.0.0')
