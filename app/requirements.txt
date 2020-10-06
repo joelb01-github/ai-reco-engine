@@ -5,6 +5,7 @@ botocore==1.18.12
 cffi==1.14.3
 click==7.1.2
 Flask==1.1.2
+gunicorn==20.0.4
 isort==5.5.4
 itsdangerous==1.1.0
 Jinja2==2.11.2
