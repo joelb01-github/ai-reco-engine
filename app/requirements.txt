@@ -1,11 +1,14 @@
 astroid==2.4.2
 binpickle==0.3.2
+boto3==1.15.12
+botocore==1.18.12
 cffi==1.14.3
 click==7.1.2
 Flask==1.1.2
 isort==5.5.4
 itsdangerous==1.1.0
 Jinja2==2.11.2
+jmespath==0.10.0
 lazy-object-proxy==1.4.3
 lenskit==0.10.1
 llvmlite==0.33.0
@@ -21,8 +24,10 @@ pylint==2.6.0
 python-dateutil==2.8.1
 python-dotenv==0.14.0
 pytz==2020.1
+s3transfer==0.3.3
 scipy==1.5.2
 six==1.15.0
 toml==0.10.1
+urllib3==1.25.10
 Werkzeug==1.0.1
 wrapt==1.12.1
