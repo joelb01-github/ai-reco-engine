@@ -4,6 +4,7 @@ import lib.utils as utils
 import json
 import boto3
 import os
+import logging
 
 app = Flask(__name__)
 
@@ -14,7 +15,7 @@ indexName = os.environ['INDEX_NAME']
 try:
   ddbTable = dynamodb.Table(linksTableName)
 except:
-  print("Error loading DynamoDB table. Check if table was created correctly and environment variable.")
+  logging.debug("Error loading DynamoDB table. Check if table was created correctly and environment variable.")
 
 data = reco.loadData()
 algo = reco.initialiseEngine(data)
