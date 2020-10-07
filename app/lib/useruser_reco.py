@@ -1,4 +1,3 @@
-from flask import current_app
 import lenskit.datasets as ds
 import pandas as pd
 from lenskit.algorithms import Recommender

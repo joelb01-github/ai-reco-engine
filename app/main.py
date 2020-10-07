@@ -24,8 +24,9 @@ try:
 except:
   app.logger.error("Error loading DynamoDB table. Check if table was created correctly and environment variable.")
 
-data = reco.loadData()
-# algo = reco.initialiseEngine(data)
+with app.app_context():
+  data = reco.loadData()
+  # algo = reco.initialiseEngine(data)
 
 @app.route('/reco-mvp', methods=['GET'])
 def root():
