@@ -1,3 +1,4 @@
+from flask import current_app
 import pandas as pd
 import time
 import botocore
@@ -10,27 +11,27 @@ def processRequestInput(requestInput, ddbTable, indexName):
 
   for row in requestInput:
     try:
-      print("searching for imdbId:", row['imdbId'])
+      current_app.logger.info("searching for imdbId: {}".format(row['imdbId']))
       items = ddbTable.query(
         IndexName = indexName,
         KeyConditionExpression=Key('imdbId').eq(row['imdbId'])
       )['Items']
-      print("items fetched:", items)
+      current_app.logger.info("items fetched: {}".format(items))
     except botocore.exceptions.ClientError as error:
-      print("ClientError from dynamoDB")
-      print(error)
-      print(error.response)
+      current_app.logger.error("ClientError from dynamoDB")
+      current_app.logger.error(error)
+      current_app.logger.error(error.response)
 
     if len(items) > 0:
       movieId = items[0]['movieId']
       rating_dict.update({int(movieId): float(row['rating'])}) 
       print("rating dict updated with:", movieId) 
     else:
-      print("No result found for imdbId:", row['imdbId'])
-          
-  print("Successfully processed request input in:", time.perf_counter() - init, "seconds. Rating dict contains", len(rating_dict), "elements.")
+      current_app.logger.error("No result found for imdbId:", row['imdbId'])
 
-  print("dict:", rating_dict)
+  current_app.logger.info("Successfully processed request input in: {} seconds. Rating dict contains {} elements.".format(time.perf_counter() - init, len(rating_dict)))
+
+  current_app.logger.info("dict:", rating_dict)
 
   return rating_dict
 

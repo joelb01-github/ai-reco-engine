@@ -1,3 +1,4 @@
+from flask import current_app
 import lenskit.datasets as ds
 import pandas as pd
 from lenskit.algorithms import Recommender
@@ -9,7 +10,7 @@ def loadData():
 
   data = ds.MovieLens('data/ML-Latest-Small')
 
-  print("Successfully loaded ML datasets in:", time.perf_counter() - init, "seconds.")
+  current_app.logger.info("Successfully loaded ML datasets in: {} seconds.".format(time.perf_counter() - init))
 
   return data
 
@@ -24,7 +25,7 @@ def initialiseEngine(data):
   algo = Recommender.adapt(user_user)
   algo.fit(data.ratings)
 
-  print("User-User algorithm all set up in:", time.perf_counter() - init, "seconds.")
+  current_app.logger.info("User-User algorithm all set up in: {} seconds.".format(time.perf_counter() - init))
 
   return algo
 
@@ -41,9 +42,9 @@ def getReco(algo, data, rating_dict):
   recommendations = recommendations.join(data.links['imdbId'], on='item')
   recommendations = recommendations[recommendations.columns[2:]]
 
-  print("Successfully computed recommendations in:", time.perf_counter() - init, "seconds.")
+  current_app.logger.info("Successfully computed recommendations in: {} seconds.".format(time.perf_counter() - init))
 
-  print("\n\nRECOMMENDED:")
-  print(recommendations)
+  current_app.logger.info("\n\nRECOMMENDED:")
+  current_app.logger.info(recommendations)
 
   return recommendations
