@@ -26,7 +26,7 @@ except:
 
 with app.app_context(): # required as logger 
   data = reco.loadData()
-  # algo = reco.initialiseEngine(data)
+  algo = reco.initialiseEngine(data)
 
 @app.route('/reco-mvp', methods=['GET'])
 def root():
