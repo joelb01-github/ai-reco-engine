@@ -38,4 +38,11 @@ def processRequestInput(requestInput, ddbTable, indexName):
 def processReco(recommendations):
   result = recommendations.to_dict('records')
 
+  # add the required 0 and tt to imdb id's
+  for item in result:
+    item.update({'imdbId': updateImdbId(item['imdbId'])})
+
   return result
+
+def updateImdbId(id):
+  return "tt{}".format(str(id).zfill(7))

@@ -40,6 +40,7 @@ def getReco(algo, data, rating_dict):
   recommendations = recs.join(data.movies['genres'], on='item')      
   recommendations = recommendations.join(data.movies['title'], on='item')
   recommendations = recommendations.join(data.links['imdbId'], on='item')
+  print(recommendations)
   recommendations = recommendations[recommendations.columns[2:]]
 
   app.logger.info("Successfully computed recommendations in: {} seconds.".format(time.perf_counter() - init))
