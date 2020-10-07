@@ -1,5 +1,6 @@
 # General ML data that will not be used at MVP stage
 backup_data/
+test.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
