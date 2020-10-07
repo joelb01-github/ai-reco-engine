@@ -24,7 +24,7 @@ try:
 except:
   app.logger.error("Error loading DynamoDB table. Check if table was created correctly and environment variable.")
 
-with app.app_context():
+with app.app_context(): # required as logger 
   data = reco.loadData()
   # algo = reco.initialiseEngine(data)
 
