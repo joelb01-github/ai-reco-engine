@@ -12,7 +12,7 @@ def processData(df):
 
     # we need to extract the three most important actors, the director and the keywords associated with that movie. Right now, our data is present in the form of "stringified" lists , we need to convert it into a safe and usable structure
 
-    app.logger.info("df head:", df.head())
+    app.logger.info(df.head())
 
     # Parse the stringified features into their corresponding python objects
 
@@ -22,6 +22,7 @@ def processData(df):
         df[feature] = df[feature].apply(literal_eval)
         app.logger.info("debug1")
 
+    app.logger.info("debug2")
 
     # Define new director, cast, genres and keywords features that are in a suitable form.
     df['director'] = df['crew'].apply(get_director)
