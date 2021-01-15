@@ -8,6 +8,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 def processData(df):
     app.logger.info("processData")
+    app.logger.info("debug0")
     init = time.perf_counter()
 
     # we need to extract the three most important actors, the director and the keywords associated with that movie. Right now, our data is present in the form of "stringified" lists , we need to convert it into a safe and usable structure
@@ -18,7 +19,7 @@ def processData(df):
     for feature in features:
         df[feature] = df[feature].apply(literal_eval)
 
-    app.logger.debug("debug1")
+    app.logger.info("debug1")
 
     # Define new director, cast, genres and keywords features that are in a suitable form.
     df['director'] = df['crew'].apply(get_director)
