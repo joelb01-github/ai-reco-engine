@@ -28,12 +28,6 @@ Parameters:
   EcsClusterStackName:
     Type: String
     Description: "Name of the CF stack associated with the instrastrure codepipeline step within the be-awsInfra-ecsCluster project"
-  DynamoLinksTable:
-    Type: String
-    Description: "Name of the dynamoDB table containing the conversion between movieID, imdbId, and omdbId."
-  ImdbIndexName:
-    Type: String
-    Description: "Name for the dynamodb imdb index."
 
 Conditions:
   HasCustomRole: !Not [ !Equals [!Ref 'ECSTaskCustomRole', ''] ]
@@ -42,16 +36,16 @@ Mappings:
   BranchName:
     dev:
       ServiceDesiredCount: 1
-      TaskCpuUnits: 512
-      TaskReservedMemory: 512
+      TaskCpuUnits: 256
+      TaskReservedMemory: 256
     uat:
+      ServiceDesiredCount: 1
+      TaskCpuUnits: 256
+      TaskReservedMemory: 256
+    prod:
       ServiceDesiredCount: 1
       TaskCpuUnits: 512
       TaskReservedMemory: 512
-    prod:
-      ServiceDesiredCount: 2
-      TaskCpuUnits: 1024
-      TaskReservedMemory: 1024
 
 Resources:
   ECSService:
@@ -120,10 +114,6 @@ Resources:
               Value: "production"
             - Name: LOGGING_LEVEL
               Value: "INFO"
-            - Name: LINKS_TABLE
-              Value: !Ref DynamoLinksTable
-            - Name: INDEX_NAME
-              Value: !Ref ImdbIndexName
             - Name: AWS_DEFAULT_REGION
               Value: !Ref AWS::Region
           PortMappings:

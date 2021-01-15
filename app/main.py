@@ -4,7 +4,6 @@ import lib.dataProcessor as dp
 import lib.recommender as reco
 import lib.utils as utils
 import json
-import boto3
 import os
 import logging
 
@@ -16,15 +15,6 @@ logging.basicConfig(
 )
 
 app.logger.info("Starting up the fire..")
-
-dynamodb = boto3.resource('dynamodb')
-linksTableName = os.environ['LINKS_TABLE']
-indexName = os.environ['INDEX_NAME']
-
-try:
-  ddbTable = dynamodb.Table(linksTableName)
-except:
-  app.logger.error("Error loading DynamoDB table. Check if table was created correctly and environment variable.")
 
 with app.app_context(): # required as logger 
   df = dl.loadData()
