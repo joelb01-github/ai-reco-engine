@@ -16,11 +16,7 @@ def processData(df):
 
     features = ['cast', 'crew', 'keywords', 'genres']
     for feature in features:
-        app.logger.info(feature)
         df[feature] = df[feature].apply(literal_eval)
-        app.logger.info(feature)
-
-    app.logger.info("debug2")
 
     # Define new director, cast, genres and keywords features that are in a suitable form.
     df['director'] = df['crew'].apply(get_director)

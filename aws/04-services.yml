@@ -36,11 +36,11 @@ Mappings:
   BranchName:
     dev:
       ServiceDesiredCount: 1
-      TaskCpuUnits: 256
+      TaskCpuUnits: 512
       TaskReservedMemory: 1024
     uat:
       ServiceDesiredCount: 1
-      TaskCpuUnits: 256
+      TaskCpuUnits: 512
       TaskReservedMemory: 1024
     prod:
       ServiceDesiredCount: 1
