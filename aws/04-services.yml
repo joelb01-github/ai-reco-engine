@@ -37,11 +37,11 @@ Mappings:
     dev:
       ServiceDesiredCount: 1
       TaskCpuUnits: 256
-      TaskReservedMemory: 512
+      TaskReservedMemory: 1024
     uat:
       ServiceDesiredCount: 1
       TaskCpuUnits: 256
-      TaskReservedMemory: 512
+      TaskReservedMemory: 1024
     prod:
       ServiceDesiredCount: 1
       TaskCpuUnits: 1024
