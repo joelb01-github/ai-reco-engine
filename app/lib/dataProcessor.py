@@ -10,12 +10,14 @@ def processData(df):
     app.logger.info("processData")
     app.logger.info("debug0")
     init = time.perf_counter()
+    app.logger.info("debug00")
 
     # we need to extract the three most important actors, the director and the keywords associated with that movie. Right now, our data is present in the form of "stringified" lists , we need to convert it into a safe and usable structure
 
     # Parse the stringified features into their corresponding python objects
 
     features = ['cast', 'crew', 'keywords', 'genres']
+    app.logger.info("debug000")
     for feature in features:
         df[feature] = df[feature].apply(literal_eval)
 
@@ -24,7 +26,7 @@ def processData(df):
     # Define new director, cast, genres and keywords features that are in a suitable form.
     df['director'] = df['crew'].apply(get_director)
 
-    app.logger.debug("debug2")
+    app.logger.info("debug2")
 
     features = ['cast', 'keywords', 'genres']
     for feature in features:
