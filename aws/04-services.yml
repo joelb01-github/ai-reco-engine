@@ -37,15 +37,15 @@ Mappings:
     dev:
       ServiceDesiredCount: 1
       TaskCpuUnits: 256
-      TaskReservedMemory: 256
+      TaskReservedMemory: 512
     uat:
       ServiceDesiredCount: 1
       TaskCpuUnits: 256
-      TaskReservedMemory: 256
+      TaskReservedMemory: 512
     prod:
       ServiceDesiredCount: 1
-      TaskCpuUnits: 512
-      TaskReservedMemory: 512
+      TaskCpuUnits: 1024
+      TaskReservedMemory: 1024
 
 Resources:
   ECSService:
