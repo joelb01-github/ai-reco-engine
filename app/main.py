@@ -1,5 +1,7 @@
 from flask import Flask, request
-import lib.useruser_reco as reco
+import lib.dataLoader as dl
+import lib.dataProcessor as dp
+import lib.recommender as reco
 import lib.utils as utils
 import json
 import boto3
@@ -25,13 +27,12 @@ except:
   app.logger.error("Error loading DynamoDB table. Check if table was created correctly and environment variable.")
 
 with app.app_context(): # required as logger 
-  data = reco.loadData()
-  algo = reco.initialiseEngine(data)
+  df = dl.loadData()
+  cosine_sim, indices = dp.processData(df)
 
 @app.route('/reco-mvp', methods=['GET'])
 def root():
   app.logger.info("Processing request at {}".format(request.path))
-
   return "Welcome to the Flask server"
 
 @app.route('/reco-mvp/top-reco', methods=['POST'])
@@ -40,10 +41,13 @@ def topReco():
 
   requestInput = json.loads(request.data)
 
-  rating_dict = utils.processRequestInput(requestInput, ddbTable, indexName)
+  # parse imdbId and check existence in data
+  imdbId = utils.processRequestInput(requestInput, indices)
 
-  recommendations = reco.getReco(algo, data, rating_dict)
+  # compute recommendation
+  recommendations = reco.get_recommendations(imdbId, df, cosine_sim, indices)
 
+  # Format results
   result = utils.processReco(recommendations)
 
   return json.dumps(result)
