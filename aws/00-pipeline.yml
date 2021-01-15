@@ -120,7 +120,7 @@ Resources:
                     "ExecutionId": "#{codepipeline.PipelineExecutionId}",
                     "BranchName": "${BranchName}",
                     "NetworkingStackName": "${NetworkingStackName}",
-                    "EcsClusterStackName": "${EcsClusterStackName}",
+                    "EcsClusterStackName": "${EcsClusterStackName}"
                   }
               InputArtifacts:
                 - Name: !Ref ProjectName
