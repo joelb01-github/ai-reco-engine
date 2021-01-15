@@ -18,12 +18,19 @@ def processData(df):
     for feature in features:
         df[feature] = df[feature].apply(literal_eval)
 
+    app.logger.debug("debug1")
+
     # Define new director, cast, genres and keywords features that are in a suitable form.
     df['director'] = df['crew'].apply(get_director)
+
+    app.logger.debug("debug2")
 
     features = ['cast', 'keywords', 'genres']
     for feature in features:
         df[feature] = df[feature].apply(get_list)
+
+
+    app.logger.debug("debug3")
 
     # # Print the new features of the first 3 films
     # print(df[['title', 'cast', 'director', 'keywords', 'genres']].head(3))
@@ -34,19 +41,31 @@ def processData(df):
     for feature in features:
         df[feature] = df[feature].apply(clean_data)
 
+    app.logger.debug("debug4")
+
     # create our "metadata soup"
     df['soup'] = df.apply(create_soup, axis=1)
 
+    app.logger.debug("debug5")
+
     # create the count matrix. we use the CountVectorizer() instead of TF-IDF. This is because we do not want to down-weight the presence of an actor/director if he or she has acted or directed in relatively more movies. It doesn't make much intuitive sense.
     count = CountVectorizer(stop_words='english')
+
+    app.logger.debug("debug6")
     count_matrix = count.fit_transform(df['soup'])
+
+    app.logger.debug("debug7")
 
     # Compute the Cosine Similarity matrix based on the count_matrix
     cosine_sim = cosine_similarity(count_matrix, count_matrix)
 
+    app.logger.debug("debug8")
+
     # Reset index of our main DataFrame and construct reverse mapping
     df = df.reset_index()
     indices = pd.Series(df.index, index=df['imdbId'])
+
+    app.logger.debug("debug9")
 
     app.logger.info("Successfully processed the data in: {} seconds.".format(time.perf_counter() - init))
 
