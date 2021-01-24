@@ -1,6 +1,5 @@
-# General ML data that will not be used at MVP stage
-backup_data/
-test.py
+# Input data not used by docker deployment
+app/data/input/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -3,37 +3,81 @@
 import pandas as pd 
 import numpy as np 
 import os
+from ast import literal_eval
 
-print("load Data")
+def runProcessor():
+  df=loadData()
+  df=processData(df)
+  writeData(df)
 
-TMDB_INPUT_DIR='data/tmdb'
-MOVIES_CSV_FILE = 'tmdb_5000_movies.csv'
-MOVIES_INPUT_PATH=os.path.join(TMDB_INPUT_DIR, MOVIES_CSV_FILE)
-CREDITS_CSV_FILE = 'tmdb_5000_credits.csv'
-CREDITS_INPUT_PATH=os.path.join(TMDB_INPUT_DIR, CREDITS_CSV_FILE)
+def loadData():
+  print("load Data")
 
-MLENS_INPUT_DIR='data/movielens'
-LINKS_CSV_FILE = 'links.csv'
-LINKS_INPUT_PATH=os.path.join(MLENS_INPUT_DIR, LINKS_CSV_FILE)
+  IMDB_INPUT_DIR='data/input/imdb'
 
-df1=pd.read_csv(CREDITS_INPUT_PATH)
-df2=pd.read_csv(MOVIES_INPUT_PATH)
-links=pd.read_csv(LINKS_INPUT_PATH)
+  MOVIES_IMDB_CSV_FILE = 'movies_processed.csv'
+  # MOVIES_IMDB_CSV_FILE = 'IMDb movies_small.csv'
+  MOVIES_IMDB_INPUT_PATH=os.path.join(IMDB_INPUT_DIR, MOVIES_IMDB_CSV_FILE)
 
-print("Data loaded.")
+  columns=['imdb_title_id', 'genre', 'director', 'actors', 'keywords']
 
-# join the two dataset on the 'tmdbId' column
-df1.columns = ['tmdbId','tittle','cast','crew']
-df2.rename(columns={'id':'tmdbId'}, inplace=True)
-data = df2.merge(df1,on='tmdbId')
-data = data.merge(links,on='tmdbId')
+  df=pd.read_csv(
+    MOVIES_IMDB_INPUT_PATH,
+    dtype={
+      'imdb_title_id': 'object',
+      'genre': 'object',
+      'director': 'object',
+      'actors': 'object',
+      'keywords': 'object'
+    },
+    usecols=columns
+  )
 
-print("Data processed.")
+  print("Data loaded.")
+  return df
 
-OUTPUT_DIR='data/processedData'
-OUTPUT_FILE='movies.csv'
-OUTPUT_PATH=os.path.join(OUTPUT_DIR, OUTPUT_FILE)
+def processData(df):
+  # replace na values with []
+  df=df.fillna(value=str([]),axis=1)
 
-data.to_csv(OUTPUT_PATH,index=False)
+  # change string from "x, y, z" to [x, y, z]
+  features = ['genre', 'director', 'actors']
+  for feature in features:
+      df[feature] = df[feature].apply(formatStrToList)
 
-print("Data written to disk.")
+  # reformat keywords from "[{id: 2, name: x}, ...]" to [x, ...]
+  df['keywords']=df['keywords'].apply(formatDeepListToList)
+
+  # Rename colums
+  data=df.rename(columns={
+    'imdb_title_id':'imdbId',
+    'director': 'directors',
+    'genre': 'genres'
+  })
+
+  print("Data processed.")
+  return data
+
+# Changes a string to a list with the tmdb formatting
+def formatStrToList(x):
+  return str(x).split(', ')
+
+def formatDeepListToList(x):
+  if not isinstance(x, str):
+    return str([])
+
+  obj=literal_eval(x)
+  keywords = [i['name'] for i in obj]
+
+  return keywords
+
+def writeData(data):
+  OUTPUT_DIR='data/processedData'
+  OUTPUT_FILE='movies.csv'
+  OUTPUT_PATH=os.path.join(OUTPUT_DIR, OUTPUT_FILE)
+
+  data.to_csv(OUTPUT_PATH,index=False)
+
+  print("Data written to disk.")
+
+runProcessor()

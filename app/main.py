@@ -1,6 +1,6 @@
 from flask import Flask, request
 import lib.dataLoader as dl
-import lib.dataProcessor as dp
+import lib.dataMapper as mp
 import lib.recommender as reco
 import lib.utils as utils
 import json
@@ -17,8 +17,8 @@ logging.basicConfig(
 app.logger.info("Starting up the fire..")
 
 with app.app_context(): # required as logger 
-  df = dl.loadData()
-  cosine_sim, indices = dp.processData(df)
+  df, cosine_sim = dl.loadData()
+  indices = mp.getMapping(df)
 
 @app.route('/reco-mvp', methods=['GET'])
 def root():
@@ -31,7 +31,7 @@ def topReco():
 
   requestInput = json.loads(request.data)
 
-  # parse imdbId and check existence in data
+  # Validate imdbId and check existence in data
   imdbId = utils.processRequestInput(requestInput, indices)
 
   # compute recommendation

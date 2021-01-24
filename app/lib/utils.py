@@ -2,8 +2,12 @@ from flask import current_app as app
 import re
 
 def processRequestInput(requestInput, indices):
-  imdbId=processImdbId(requestInput['imdbId'])
-  print(imdbId)
+  app.logger.info('processRequestInput')
+
+  imdbId=requestInput['imdbId']
+
+  verifyImdbFormat(imdbId)
+
   try:
     indices[imdbId]
     return imdbId
@@ -12,65 +16,20 @@ def processRequestInput(requestInput, indices):
     app.logger.error(errorMessage)
     return errorMessage
 
-def processImdbId(id):
+def verifyImdbFormat(id):
   regex = r"^tt\d{7}$"
   
   if re.search(regex, id):
-    # strip tt and leading 0 + convert to int
-    return int(re.sub(r"tt0*", "", id))
+    return 
   else:
-    raise ValueError('imdb id format is not supported')
+    raise ValueError('wrong imdb id format.')
 
 def processReco(recommendations):
-  # convert back imdbId int to proper value
-  recommendations=recommendations.apply(updateImdbId)
+  app.logger.info('processReco')
 
   # conveting back to python list
-  result = recommendations.values.tolist()
+  result = {
+    "results": recommendations.values.tolist()
+  }
 
   return result
-
-def updateImdbId(id):
-  return "tt{}".format(str(id).zfill(7))
-
-# def processDictInput(requestInput, ddbTable, indexName):
-#   init = time.perf_counter()
-
-#   rating_dict = {}
-
-#   for row in requestInput:
-#     try:
-#       imdbId = processImdbId(row['imdbId'])
-#       row.update({'imdbId': imdbId})
-#     except:
-#       app.logger.error('Wrong imdbId: {}, not taking it into account.'.format(row['imdbId']))
-#       continue
-
-#     try:
-#       app.logger.info("searching for imdbId: {}".format(row['imdbId']))
-
-#       items = ddbTable.query(
-#         IndexName = indexName,
-#         KeyConditionExpression=Key('imdbId').eq(row['imdbId'])
-#       )['Items']
-
-#       app.logger.info("items fetched: {}".format(items))
-#     except botocore.exceptions.ClientError as error:
-#       app.logger.error("ClientError from dynamoDB")
-#       app.logger.error(error)
-#       app.logger.error(error.response)
-
-#     if len(items) > 0:
-#       movieId = items[0]['movieId']
-
-#       rating_dict.update({int(movieId): float(row['rating'])}) 
-      
-#       print("rating dict updated with:", movieId) 
-#     else:
-#       app.logger.error("No result found for imdbId:", row['imdbId'])
-
-#   app.logger.info("Successfully processed request input in: {} seconds. Rating dict contains {} elements.".format(time.perf_counter() - init, len(rating_dict)))
-
-#   app.logger.info(("dict: {}").format(rating_dict))
-
-#   return rating_dict
