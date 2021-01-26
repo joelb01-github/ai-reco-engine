@@ -18,6 +18,10 @@ Parameters:
     Type: String
     Default: "/reco-mvp*"
     Description: A path on the public load balancer that this service should be connected to. Use * to send all load balancer traffic to this service.
+  ContainerPort:
+    Type: Number
+    Default: 80
+    Description: What port number the application inside the docker container is binding to  
   Priority:
     Type: Number
     Default: 2
@@ -36,15 +40,15 @@ Mappings:
   BranchName:
     dev:
       ServiceDesiredCount: 1
-      TaskCpuUnits: 512
+      TaskCpuUnits: 256
       TaskReservedMemory: 512
     uat:
       ServiceDesiredCount: 1
-      TaskCpuUnits: 512
+      TaskCpuUnits: 256
       TaskReservedMemory: 512
     prod:
       ServiceDesiredCount: 1
-      TaskCpuUnits: 1024
+      TaskCpuUnits: 256
       TaskReservedMemory: 1024
 
 Resources:
@@ -53,6 +57,12 @@ Resources:
       - HTTPSLoadBalancerRule
       - HTTPLoadBalancerRule
     Type: AWS::ECS::Service
+    # Added for bug on AwsvpcConfiguration requiring it to be AwsVpcConfiguration. Once fixed by aws, can take this away
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+          - E3002
     Properties:
       Cluster: 
         Fn::ImportValue:
@@ -65,12 +75,22 @@ Resources:
         !Ref BranchName,
         ServiceDesiredCount
       ]
-      LaunchType: EC2
+      LaunchType: FARGATE
       LoadBalancers:
         - ContainerName: !Sub "${ProjectName}-${BranchName}"
-          ContainerPort: 80
+          ContainerPort: !Ref 'ContainerPort'
           TargetGroupArn: !Ref LoadBalancerTargetGroup
-      SchedulingStrategy: REPLICA
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - Fn::ImportValue:
+                !Sub "${EcsClusterStackName}-${BranchName}:FargateContainerSecurityGroup"
+          Subnets:
+            - Fn::ImportValue:
+                !Sub "${NetworkingStackName}:PublicSubnetOne"
+            - Fn::ImportValue:
+                !Sub "${NetworkingStackName}:PublicSubnetTwo"
       ServiceName: !Sub "${ProjectName}-${BranchName}"
       TaskDefinition: !Ref ECSTaskDefinition
 
@@ -88,11 +108,17 @@ Resources:
         !Ref BranchName,
         TaskReservedMemory
       ]
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
       TaskRoleArn: 
         Fn::If:
           - 'HasCustomRole'
           - !Ref 'ECSTaskCustomRole'
           - !Ref "AWS::NoValue"
+      ExecutionRoleArn:
+        Fn::ImportValue:
+          !Sub "${EcsClusterStackName}-${BranchName}:ECSTaskExecutionRole"
       ContainerDefinitions:
         - Name: !Sub "${ProjectName}-${BranchName}"
           Image: !Sub 
@@ -103,8 +129,6 @@ Resources:
                 Fn::ImportValue:
                   !Sub "${EcsClusterStackName}-${BranchName}:ECRRepositoryName"
               ExecutionId: !Ref ExecutionId
-          Cpu: !FindInMap [ BranchName, !Ref BranchName, TaskCpuUnits ]
-          Memory: !FindInMap [ BranchName, !Ref BranchName, TaskReservedMemory ]
           Environment:
             - Name: DEV_ENV
               Value: !Ref BranchName
@@ -117,12 +141,13 @@ Resources:
             - Name: AWS_DEFAULT_REGION
               Value: !Ref AWS::Region
           PortMappings:
-            - ContainerPort: 80
+            - ContainerPort: !Ref 'ContainerPort'
           LogConfiguration:
             LogDriver: awslogs
             Options:
               awslogs-group: !Ref LogGroup
               awslogs-region: !Ref 'AWS::Region'
+              awslogs-stream-prefix: 'task-1'
 
   LogGroup:
     Type: AWS::Logs::LogGroup
@@ -134,11 +159,11 @@ Resources:
   LoadBalancerTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      TargetType: instance
+      TargetType: ip
       Protocol: HTTP
-      Port: 80
+      Port: !Ref 'ContainerPort'
       HealthCheckEnabled: true
-      HealthCheckIntervalSeconds: 30
+      HealthCheckIntervalSeconds: 6
       HealthCheckPath: /reco-mvp
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 5
