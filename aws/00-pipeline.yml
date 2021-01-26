@@ -13,7 +13,7 @@ Parameters:
     AllowedValues:
       - "dev"
       - "uat"
-      - "master"
+      - "prod"
   GitHubOwner:
     Type: String
     Description: "Owner of the github repo used for the source"

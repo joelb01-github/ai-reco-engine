@@ -10,11 +10,6 @@ Parameters:
     Description: Execution ID of the pipeline
   BranchName:
     Type: String
-    Description: "The deployment environment" 
-    AllowedValues:
-      - "dev"
-      - "uat"
-      - "master"
   EcsClusterStackName:
     Type: String
     Description: "Name of the CF stack associated with the instrastrure codepipeline step within the be-awsInfra-ecsCluster project"
