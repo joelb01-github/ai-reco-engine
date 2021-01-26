@@ -63,6 +63,12 @@ Resources:
         Type: CODEPIPELINE
         BuildSpec: "buildspec-docker.yml"
 
+  LogsLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/codebuild/${CodeBuild}"
+      RetentionInDays: 7
+
   CodeBuildRole:
     Type: AWS::IAM::Role
     Properties:
