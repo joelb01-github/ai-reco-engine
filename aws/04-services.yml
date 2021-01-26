@@ -49,7 +49,7 @@ Mappings:
     prod:
       ServiceDesiredCount: 1
       TaskCpuUnits: 256
-      TaskReservedMemory: 1024
+      TaskReservedMemory: 512
 
 Resources:
   ECSService:
