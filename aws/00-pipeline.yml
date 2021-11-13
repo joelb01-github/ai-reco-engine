@@ -17,7 +17,7 @@ Parameters:
   GitHubOwner:
     Type: String
     Description: "Owner of the github repo used for the source"
-    Default: "wantedmedia"
+    Default: "__owner_profile_here___"
   Repo:
     Type: String
     Description: "github repo used for the source"
